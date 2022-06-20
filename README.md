@@ -1,1 +1,1 @@
-# oci-terraform-flask
+# oci-terraform-django
