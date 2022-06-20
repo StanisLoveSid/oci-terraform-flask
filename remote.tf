@@ -18,23 +18,21 @@ resource "null_resource" "compute-script1" {
       "sudo -u root yum -y install oracle-instantclient18.3-basic",
       "sudo -u root yum -y install oracle-instantclient18.3-sqlplus",
 
-      "echo '== [compute_instance1] 2. Install Python3, and then with pip3 cx_Oracle and flask'",
+      "echo '== [compute_instance1] 2. Install Python3, and then with pip3 cx_Oracle and django'",
       "sudo -u root yum install -y python36",
       "sudo -u root pip3 install cx_Oracle",
-      "sudo -u root pip3 install flask",
+      "sudo -u root pip3 install django",
 
       "echo '== [compute_instance1] 3. Disabling firewall and starting HTTPD service'",
       "sudo -u root service firewalld stop",
-
-      "echo '== [compute_instance1] 4. Prepare Flask directory structure'",
-      "sudo -u root mkdir /home/opc/templates",
-      "sudo -u root chown opc /home/opc/templates/",
-      "sudo -u root mkdir /home/opc/static/",
-      "sudo -u root chown opc /home/opc/static",
-      "sudo -u root mkdir /home/opc/static/css/",
-      "sudo -u root chown opc /home/opc/static/css/",
-      "sudo -u root mkdir /home/opc/static/img",
-      "sudo -u root chown opc /home/opc/static/img/"
+      
+      "echo '== [compute_instance1] 4. Prepare django directory structure'",
+      "sudo -u root mkdir /home/opc/hellos",
+      "sudo -u root chown opc /home/opc/hellos/",
+      "sudo -u root mkdir /home/opc/hellos/migrations",
+      "sudo -u root chown opc /home/opc/hellos/migrations/",
+      "sudo -u root mkdir /home/opc/main",
+      "sudo -u root chown opc /home/opc/main/"
     ]
   }
 
@@ -48,50 +46,50 @@ resource "null_resource" "compute-script1" {
       agent       = false
       timeout     = "10m"
     }
-    source      = "${path.module}/flask_dir/static/css/"
-    destination = "/home/opc/static/css"
-  }
-
-  provisioner "file" {
-    connection {
-      type        = "ssh"
-      user        = "opc"
-      host        = oci_core_instance.compute_instance1.public_ip
-      private_key = tls_private_key.public_private_key_pair.private_key_pem
-      script_path = "/home/opc/myssh.sh"
-      agent       = false
-      timeout     = "10m"
-    }
-    source      = "${path.module}/flask_dir/static/img/"
-    destination = "/home/opc/static/img"
-  }
-
-  provisioner "file" {
-    connection {
-      type        = "ssh"
-      user        = "opc"
-      host        = oci_core_instance.compute_instance1.public_ip
-      private_key = tls_private_key.public_private_key_pair.private_key_pem
-      script_path = "/home/opc/myssh.sh"
-      agent       = false
-      timeout     = "10m"
-    }
-    source      = "${path.module}/flask_dir/templates/"
-    destination = "/home/opc/templates"
-  }
-
-  provisioner "file" {
-    connection {
-      type        = "ssh"
-      user        = "opc"
-      host        = oci_core_instance.compute_instance1.public_ip
-      private_key = tls_private_key.public_private_key_pair.private_key_pem
-      script_path = "/home/opc/myssh.sh"
-      agent       = false
-      timeout     = "10m"
-    }
-    source      = "${path.module}/flask_dir/"
+    source      = "${path.module}/hellooci/"
     destination = "/home/opc/"
+  }
+
+  provisioner "file" {
+    connection {
+      type        = "ssh"
+      user        = "opc"
+      host        = oci_core_instance.compute_instance1.public_ip
+      private_key = tls_private_key.public_private_key_pair.private_key_pem
+      script_path = "/home/opc/myssh.sh"
+      agent       = false
+      timeout     = "10m"
+    }
+    source      = "${path.module}/hellooci/main/"
+    destination = "/home/opc/main/"
+  }
+
+  provisioner "file" {
+    connection {
+      type        = "ssh"
+      user        = "opc"
+      host        = oci_core_instance.compute_instance1.public_ip
+      private_key = tls_private_key.public_private_key_pair.private_key_pem
+      script_path = "/home/opc/myssh.sh"
+      agent       = false
+      timeout     = "10m"
+    }
+    source      = "${path.module}/hellooci/hellos/"
+    destination = "/home/opc/hellos/"
+  }
+
+  provisioner "file" {
+    connection {
+      type        = "ssh"
+      user        = "opc"
+      host        = oci_core_instance.compute_instance1.public_ip
+      private_key = tls_private_key.public_private_key_pair.private_key_pem
+      script_path = "/home/opc/myssh.sh"
+      agent       = false
+      timeout     = "10m"
+    }
+    source      = "${path.module}/hellooci/hellos/migrations/"
+    destination = "/home/opc/hellos/migrations/"
   }
 
   provisioner "file" {
@@ -183,11 +181,11 @@ resource "null_resource" "compute-script1" {
       timeout     = "10m"
     }
     inline = [
-      "echo '== [compute_instance1] 7. Run Flask with ATP access'",
+      "echo '== [compute_instance1] 7. Run Django with ATP access'",
       "sudo -u root python3 --version",
       "sudo -u root chmod +x /home/opc/app.sh",
-      "sudo -u root sed -i 's/ATP_password/${var.ATP_password}/g' /home/opc/app.py",
-      "sudo -u root sed -i 's/ATP_alias/${var.ATP_database_db_name}_medium/g' /home/opc/app.py",
+      "sudo -u root sed -i 's/ATP_password/${var.ATP_password}/g' /home/opc/manage.py",
+      "sudo -u root sed -i 's/ATP_alias/${var.ATP_database_db_name}_medium/g' /home/opc/manage.py",
       "sudo -u root nohup /home/opc/app.sh > /home/opc/app.log &",
       "echo 'nohup /home/opc/app.sh > /home/opc/app.log &' | sudo tee -a  /etc/rc.d/rc.local",
       "sudo -u root chmod +x /etc/rc.d/rc.local",
@@ -220,23 +218,21 @@ resource "null_resource" "compute-script2" {
       "sudo -u root yum-config-manager --enable ol7_oracle_instantclient",
       "sudo -u root yum -y install oracle-instantclient18.3-basic",
 
-      "echo '== [compute_instance2] 2. Install Python3, and then with pip3 cx_Oracle and flask'",
+      "echo '== [compute_instance2] 2. Install Python3, and then with pip3 cx_Oracle and django'",
       "sudo -u root yum install -y python36",
       "sudo -u root pip3 install cx_Oracle",
-      "sudo -u root pip3 install flask",
+      "sudo -u root pip3 install django",
 
-      "echo '== [compute_instance2] 3. Disabling firewall and starting HTTPD service'",
+      "echo '== [compute_instance1] 3. Disabling firewall and starting HTTPD service'",
       "sudo -u root service firewalld stop",
-
-      "echo '== [compute_instance2] 4. Prepare Flask directory structure'",
-      "sudo -u root mkdir /home/opc/templates",
-      "sudo -u root chown opc /home/opc/templates/",
-      "sudo -u root mkdir /home/opc/static/",
-      "sudo -u root chown opc /home/opc/static",
-      "sudo -u root mkdir /home/opc/static/css/",
-      "sudo -u root chown opc /home/opc/static/css/",
-      "sudo -u root mkdir /home/opc/static/img",
-      "sudo -u root chown opc /home/opc/static/img/"
+      
+      "echo '== [compute_instance1] 4. Prepare Django directory structure'",
+      "sudo -u root mkdir /home/opc/hellos",
+      "sudo -u root chown opc /home/opc/hellos/",
+      "sudo -u root mkdir /home/opc/hellos/migrations",
+      "sudo -u root chown opc /home/opc/hellos/migrations/",
+      "sudo -u root mkdir /home/opc/main",
+      "sudo -u root chown opc /home/opc/main/"
     ]
   }
 
@@ -250,8 +246,8 @@ resource "null_resource" "compute-script2" {
       agent       = false
       timeout     = "10m"
     }
-    source      = "${path.module}/flask_dir/static/css/"
-    destination = "/home/opc/static/css"
+    source      = "${path.module}/hellooci/hellos/migrations/"
+    destination = "/home/opc/hellos/migrations/"
   }
 
   provisioner "file" {
@@ -264,8 +260,8 @@ resource "null_resource" "compute-script2" {
       agent       = false
       timeout     = "10m"
     }
-    source      = "${path.module}/flask_dir/static/img/"
-    destination = "/home/opc/static/img"
+    source      = "${path.module}/hellooci/hellos/"
+    destination = "/home/opc/hellos/"
   }
 
   provisioner "file" {
@@ -278,23 +274,24 @@ resource "null_resource" "compute-script2" {
       agent       = false
       timeout     = "10m"
     }
-    source      = "${path.module}/flask_dir/templates/"
-    destination = "/home/opc/templates"
-  }
-
-  provisioner "file" {
-    connection {
-      type        = "ssh"
-      user        = "opc"
-      host        = oci_core_instance.compute_instance2.public_ip
-      private_key = tls_private_key.public_private_key_pair.private_key_pem
-      script_path = "/home/opc/myssh.sh"
-      agent       = false
-      timeout     = "10m"
-    }
-    source      = "${path.module}/flask_dir/"
+    source      = "${path.module}/hellooci/"
     destination = "/home/opc/"
   }
+
+  provisioner "file" {
+    connection {
+      type        = "ssh"
+      user        = "opc"
+      host        = oci_core_instance.compute_instance2.public_ip
+      private_key = tls_private_key.public_private_key_pair.private_key_pem
+      script_path = "/home/opc/myssh.sh"
+      agent       = false
+      timeout     = "10m"
+    }
+    source      = "${path.module}/hellooci/main/"
+    destination = "/home/opc/main/"
+  }
+
 
   provisioner "file" {
     connection {
@@ -365,11 +362,11 @@ resource "null_resource" "compute-script2" {
       timeout     = "10m"
     }
     inline = [
-      "echo '== [compute_instance2] 6. Run Flask with ATP access'",
+      "echo '== [compute_instance2] 6. Run Django with ATP access'",
       "sudo -u root python3 --version",
       "sudo -u root chmod +x /home/opc/app.sh",
-      "sudo -u root sed -i 's/ATP_password/${var.ATP_password}/g' /home/opc/app.py",
-      "sudo -u root sed -i 's/ATP_alias/${var.ATP_database_db_name}_medium/g' /home/opc/app.py",
+      "sudo -u root sed -i 's/ATP_password/${var.ATP_password}/g' /home/opc/manage.py",
+      "sudo -u root sed -i 's/ATP_alias/${var.ATP_database_db_name}_medium/g' /home/opc/manage.py",
       "sudo -u root nohup /home/opc/app.sh > /home/opc/app.log &",
       "echo 'nohup /home/opc/app.sh > /home/opc/app.log &' | sudo tee -a  /etc/rc.d/rc.local",
       "sudo -u root chmod +x /etc/rc.d/rc.local",
